@@ -1,6 +1,7 @@
 
 import { Transaction } from "@/type/transaction";
-import React from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
     FlatList,
     StyleSheet,
@@ -10,23 +11,32 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TransactionItem } from "../components/TransactionItem";
-
+import { db, initDB } from "../database/db";
 
 export default function HomeScreen() {
-  const transactions: Transaction[] = [{
-    id: 1,
-    title: "Lương tháng 10",
-    amount: 10000000,
-    createdAt: "2025-10-31",
-    type: "income",
-  },
-  {
-    id: 2,
-    title: "Mua cà phê",
-    amount: 50000,
-    createdAt: "2025-11-01",
-    type: "expense",
-  },];
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const router = useRouter();
+
+  
+
+  const fetchTransactions = async () => {
+    const result = await db.getAllAsync<Transaction>(
+      "SELECT * FROM transactions ORDER BY id DESC"
+    );
+    setTransactions(result);
+  };
+
+  useEffect(() => {
+    initDB();
+    fetchTransactions();
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchTransactions();
+    }, [])
+  );
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -45,7 +55,9 @@ export default function HomeScreen() {
 
         {/* Action buttons */}
         <View style={styles.actionRow}>
-          <TouchableOpacity style={styles.addButton}>
+          <TouchableOpacity
+          onPress={() => router.push("/add" as any)}
+          style={styles.addButton}>
             <Text style={styles.addButtonText}>Thêm giao dịch</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.syncButton}>

@@ -3,5 +3,5 @@ export type Transaction = {
   title: string;
   amount: number;
   createdAt: string;
-  type: "income" | "expense";
+  type: "Thu" | "Chi";
 }

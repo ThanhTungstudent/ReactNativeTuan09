@@ -10,7 +10,7 @@ interface Props {
 }
 
 export const TransactionItem: React.FC<Props> = ({ item }) => {
-  const isIncome = item.type === "income";
+  const isIncome = item.type === "Thu";
 
   return (
     <View style={[styles.itemContainer, isIncome ? styles.income : styles.expense]}>
