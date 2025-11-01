@@ -1,4 +1,3 @@
-
 import { Transaction } from "@/type/transaction";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -16,8 +15,6 @@ import { db, initDB } from "../database/db";
 export default function HomeScreen() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const router = useRouter();
-
-  
 
   const fetchTransactions = async () => {
     const result = await db.getAllAsync<Transaction>(
@@ -37,6 +34,14 @@ export default function HomeScreen() {
     }, [])
   );
 
+  const handleAdd = () => {
+    router.push({ pathname: "/add" });
+  };
+
+  const handleEdit = (item: Transaction) => {
+    // ✅ Khi nhấn vào item → chuyển đến màn hình edit, truyền param id
+    router.push({ pathname: "/edit", params: { id: String(item.id) } });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -55,9 +60,7 @@ export default function HomeScreen() {
 
         {/* Action buttons */}
         <View style={styles.actionRow}>
-          <TouchableOpacity
-          onPress={() => router.push("/add" as any)}
-          style={styles.addButton}>
+          <TouchableOpacity onPress={handleAdd} style={styles.addButton}>
             <Text style={styles.addButtonText}>Thêm giao dịch</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.syncButton}>
@@ -71,7 +74,11 @@ export default function HomeScreen() {
           <FlatList
             data={transactions}
             keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => <TransactionItem item={item}/>}
+            renderItem={({ item }) => (
+              <TouchableOpacity onPress={() => handleEdit(item)}>
+                <TransactionItem item={item} />
+              </TouchableOpacity>
+            )}
             ListEmptyComponent={
               <Text style={styles.emptyText}>Chưa có giao dịch nào</Text>
             }
