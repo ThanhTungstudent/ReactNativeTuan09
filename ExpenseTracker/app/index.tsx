@@ -2,6 +2,7 @@ import { Transaction } from "@/type/transaction";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
+    Alert,
     FlatList,
     RefreshControl,
     StyleSheet,
@@ -17,7 +18,7 @@ import { db, initDB } from "../database/db";
 export default function HomeScreen() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [refreshing, setRefreshing] = useState(false); // ✅ state cho refresh
+  const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
 
   // ✅ Lấy danh sách giao dịch
@@ -61,6 +62,60 @@ export default function HomeScreen() {
     setRefreshing(false);
   };
 
+  // ✅ Hàm đồng bộ với API
+  const handleSync = async () => {
+    Alert.prompt(
+      "Nhập link API để đồng bộ",
+      "Dán link MockAPI.io (vd: https://mockapi.io/api/v1/transactions)",
+      [
+        {
+          text: "Hủy",
+          style: "cancel",
+        },
+        {
+          text: "Đồng bộ",
+          onPress: async (apiUrl) => {
+            if (!apiUrl) return Alert.alert("⚠️ Thiếu link API");
+
+            try {
+              // 1️⃣ Xoá toàn bộ data trên API
+              const existing = await fetch(apiUrl);
+              const data = await existing.json();
+              for (const item of data) {
+                await fetch(`${apiUrl}/${item.id}`, { method: "DELETE" });
+              }
+
+              // 2️⃣ Lấy toàn bộ dữ liệu SQLite
+              const localData = await db.getAllAsync<Transaction>(
+                "SELECT * FROM transactions WHERE deleted = 0"
+              );
+
+              // 3️⃣ Upload từng bản ghi lên API
+              for (const t of localData) {
+                await fetch(apiUrl, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    title: t.title,
+                    amount: t.amount,
+                    type: t.type,
+                    createdAt: t.createdAt,
+                  }),
+                });
+              }
+
+              Alert.alert("✅ Thành công", "Đã đồng bộ dữ liệu lên API!");
+            } catch (error) {
+              console.error(error);
+              Alert.alert("❌ Lỗi", "Không thể đồng bộ. Kiểm tra lại đường dẫn API.");
+            }
+          },
+        },
+      ],
+      "plain-text"
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -81,7 +136,7 @@ export default function HomeScreen() {
           <TouchableOpacity onPress={handleAdd} style={styles.addButton}>
             <Text style={styles.addButtonText}>Thêm giao dịch</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.syncButton}>
+          <TouchableOpacity onPress={handleSync} style={styles.syncButton}>
             <Text style={styles.syncButtonText}>Đồng bộ</Text>
           </TouchableOpacity>
         </View>

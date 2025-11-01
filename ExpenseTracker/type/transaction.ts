@@ -4,4 +4,5 @@ export type Transaction = {
   amount: number;
   createdAt: string;
   type: "Thu" | "Chi";
+  deleted: number;
 }
