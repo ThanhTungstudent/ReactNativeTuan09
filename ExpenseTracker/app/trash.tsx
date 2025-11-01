@@ -1,7 +1,14 @@
 import { Transaction } from "@/type/transaction";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { db } from "../database/db";
 
 export default function TrashScreen() {
@@ -43,6 +50,20 @@ export default function TrashScreen() {
     ]);
   };
 
+  // ✅ Hiện menu khi chạm lâu vào item
+  const handleLongPress = (id: number) => {
+    Alert.alert(
+      "Chọn hành động",
+      "Bạn muốn làm gì với giao dịch này?",
+      [
+        { text: "Khôi phục", onPress: () => restoreItem(id) },
+        { text: "Xoá vĩnh viễn", style: "destructive", onPress: () => deleteForever(id) },
+        { text: "Hủy", style: "cancel" },
+      ],
+      { cancelable: true }
+    );
+  };
+
   return (
     <View style={styles.container}>
       {/* ✅ Header có nút quay lại */}
@@ -51,7 +72,7 @@ export default function TrashScreen() {
           <Text style={styles.backButton}>⬅️ Quay lại</Text>
         </TouchableOpacity>
         <Text style={styles.header}>🗑️ Thùng rác</Text>
-        <View style={{ width: 80 }} /> 
+        <View style={{ width: 80 }} />
       </View>
 
       {/* ✅ Danh sách các giao dịch đã xoá */}
@@ -59,17 +80,13 @@ export default function TrashScreen() {
         data={trash}
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => (
-          <View style={styles.item}>
+          <TouchableOpacity
+            style={styles.item}
+            onLongPress={() => handleLongPress(item.id)}
+          >
             <Text style={styles.title}>{item.title}</Text>
-            <View style={styles.row}>
-              <TouchableOpacity onPress={() => restoreItem(item.id)}>
-                <Text style={styles.restore}>↩️ Khôi phục</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => deleteForever(item.id)}>
-                <Text style={styles.delete}>❌ Xoá vĩnh viễn</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+            <Text style={{ color: "#777" }}>{item.amount} đ</Text>
+          </TouchableOpacity>
         )}
         ListEmptyComponent={
           <Text style={{ textAlign: "center", color: "#777", marginTop: 20 }}>
@@ -98,7 +115,4 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   title: { fontSize: 16, fontWeight: "600", marginBottom: 6 },
-  row: { flexDirection: "row", justifyContent: "space-between" },
-  restore: { color: "#2b8aef", fontWeight: "600" },
-  delete: { color: "red", fontWeight: "600" },
 });
