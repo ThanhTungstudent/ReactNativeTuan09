@@ -1,55 +1,83 @@
-
 import { Transaction } from "@/type/transaction";
+import { useRouter } from "expo-router";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { db } from "../database/db";
 
-
-
-interface Props {
+type Props = {
   item: Transaction;
-}
+  refresh: () => void;
+};
 
-export const TransactionItem: React.FC<Props> = ({ item }) => {
-  const isIncome = item.type === "Thu";
+export const TransactionItem = ({ item, refresh }: Props) => {
+  const router = useRouter();
+
+  // ✅ Hàm xoá (đánh dấu là deleted = 1)
+  const handleDelete = () => {
+    Alert.alert(
+      "Xác nhận xoá",
+      `Bạn có chắc muốn xoá "${item.title}" không?`,
+      [
+        { text: "Hủy", style: "cancel" },
+        {
+          text: "Xoá",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await db.runAsync(
+                "UPDATE transactions SET deleted = 1 WHERE id = ?",
+                [item.id]
+              );
+              refresh(); // Cập nhật lại danh sách
+              Alert.alert("Đã xoá", `"${item.title}" đã được chuyển vào thùng rác.`);
+            } catch (error) {
+              console.error(error);
+              Alert.alert("Lỗi", "Không thể xoá giao dịch.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // ✅ Hàm sửa
+  const handleEdit = () => {
+    router.push({ pathname: "/edit", params: { id: String(item.id) } });
+  };
 
   return (
-    <View style={[styles.itemContainer, isIncome ? styles.income : styles.expense]}>
-      <View style={styles.rowBetween}>
+    <TouchableOpacity
+      onPress={handleEdit}
+      onLongPress={handleDelete}
+      style={styles.item}
+    >
+      <View style={styles.row}>
         <Text style={styles.title}>{item.title}</Text>
-        <Text
-          style={[
-            styles.amount,
-            { color: isIncome ? "#2ecc71" : "#e74c3c" },
-          ]}
-        >
-          {isIncome ? `+ ${item.amount.toLocaleString()} ₫` : `- ${item.amount.toLocaleString()} ₫`}
+        <Text style={styles.amount}>
+          {Number(item.amount).toLocaleString()} ₫
         </Text>
       </View>
-      <Text style={styles.date}>{item.createdAt}</Text>
-    </View>
+      <Text style={styles.date}>
+        {new Date(item.createdAt).toLocaleString()}
+      </Text>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
-  itemContainer: {
+  item: {
     backgroundColor: "#fff",
     padding: 12,
-    borderRadius: 10,
-    marginBottom: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
+    borderRadius: 8,
+    marginBottom: 8,
+    borderLeftWidth: 5,
+    borderLeftColor: "#2b8aef",
   },
-  rowBetween: {
+  row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
   },
   title: { fontSize: 16, fontWeight: "600", color: "#333" },
-  amount: { fontSize: 16, fontWeight: "700" },
+  amount: { fontSize: 16, fontWeight: "600", color: "#2b8aef" },
   date: { fontSize: 12, color: "#777", marginTop: 4 },
-  income: { borderLeftWidth: 4, borderLeftColor: "#2ecc71" },
-  expense: { borderLeftWidth: 4, borderLeftColor: "#e74c3c" },
 });

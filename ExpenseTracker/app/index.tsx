@@ -16,12 +16,12 @@ export default function HomeScreen() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const router = useRouter();
 
-  const fetchTransactions = async () => {
-    const result = await db.getAllAsync<Transaction>(
-      "SELECT * FROM transactions ORDER BY id DESC"
-    );
-    setTransactions(result);
-  };
+const fetchTransactions = async () => {
+  const result = await db.getAllAsync<Transaction>(
+    "SELECT * FROM transactions WHERE deleted = 0 ORDER BY id DESC"
+  );
+  setTransactions(result);
+};
 
   useEffect(() => {
     initDB();
@@ -38,10 +38,6 @@ export default function HomeScreen() {
     router.push({ pathname: "/add" });
   };
 
-  const handleEdit = (item: Transaction) => {
-    // ✅ Khi nhấn vào item → chuyển đến màn hình edit, truyền param id
-    router.push({ pathname: "/edit", params: { id: String(item.id) } });
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -74,17 +70,19 @@ export default function HomeScreen() {
           <FlatList
             data={transactions}
             keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => handleEdit(item)}>
-                <TransactionItem item={item} />
-              </TouchableOpacity>
-            )}
+             renderItem={({ item }) => (
+    <TransactionItem item={item} refresh={fetchTransactions} />
+  )}
             ListEmptyComponent={
               <Text style={styles.emptyText}>Chưa có giao dịch nào</Text>
             }
           />
         </View>
+              <TouchableOpacity onPress={() => router.push("/trash")}>
+  <Text>🗑️ Xem thùng rác</Text>
+</TouchableOpacity>
       </View>
+
     </SafeAreaView>
   );
 }

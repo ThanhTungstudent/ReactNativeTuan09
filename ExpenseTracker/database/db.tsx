@@ -9,7 +9,14 @@ export const initDB = async () => {
       title TEXT NOT NULL,
       amount REAL NOT NULL,
       type TEXT NOT NULL,
-      createdAt TEXT DEFAULT (datetime('now','localtime'))
+      createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  // ✅ Thêm cột deleted nếu chưa có
+  try {
+    await db.execAsync(`ALTER TABLE transactions ADD COLUMN deleted INTEGER DEFAULT 0`);
+  } catch (error) {
+    // Bỏ qua nếu cột đã tồn tại
+  }
 };
