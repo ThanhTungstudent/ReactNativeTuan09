@@ -2,14 +2,14 @@ import { Transaction } from "@/type/transaction";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TransactionItem } from "../components/TransactionItem";
@@ -66,7 +66,7 @@ export default function HomeScreen() {
   const handleSync = async () => {
     Alert.prompt(
       "Nhập link API để đồng bộ",
-      "Dán link MockAPI.io (vd: https://mockapi.io/api/v1/transactions)",
+      "Dán link MockAPI.io (vd: https://68e7623b10e3f82fbf3ee539.mockapi.io/transactions)",
       [
         {
           text: "Hủy",
@@ -74,23 +74,27 @@ export default function HomeScreen() {
         },
         {
           text: "Đồng bộ",
-          onPress: async (apiUrl) => {
-            if (!apiUrl) return Alert.alert("⚠️ Thiếu link API");
+          onPress: async (apiUrl?: string) => {
+            if (!apiUrl) {
+              Alert.alert("⚠️ Thiếu link API");
+              return;
+            }
 
             try {
-              // 1️⃣ Xoá toàn bộ data trên API
+              // ✅ Lấy toàn bộ data trên API để xóa
               const existing = await fetch(apiUrl);
               const data = await existing.json();
+
               for (const item of data) {
                 await fetch(`${apiUrl}/${item.id}`, { method: "DELETE" });
               }
 
-              // 2️⃣ Lấy toàn bộ dữ liệu SQLite
+              // ✅ Lấy tất cả giao dịch trong SQLite
               const localData = await db.getAllAsync<Transaction>(
                 "SELECT * FROM transactions WHERE deleted = 0"
               );
 
-              // 3️⃣ Upload từng bản ghi lên API
+              // ✅ POST lên API
               for (const t of localData) {
                 await fetch(apiUrl, {
                   method: "POST",
@@ -107,7 +111,10 @@ export default function HomeScreen() {
               Alert.alert("✅ Thành công", "Đã đồng bộ dữ liệu lên API!");
             } catch (error) {
               console.error(error);
-              Alert.alert("❌ Lỗi", "Không thể đồng bộ. Kiểm tra lại đường dẫn API.");
+              Alert.alert(
+                "❌ Lỗi",
+                "Không thể đồng bộ. Vui lòng kiểm tra lại link API."
+              );
             }
           },
         },
