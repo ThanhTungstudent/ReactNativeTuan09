@@ -21,14 +21,21 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
 
+  const [filter, setFilter] = useState<"all" | "Thu" | "Chi">("all");
+
   // ✅ Lấy danh sách giao dịch
-  const fetchTransactions = async (query: string = "") => {
+  const fetchTransactions = async (query: string = "", filterType = filter) => {
     let sql = "SELECT * FROM transactions WHERE deleted = 0";
     let params: string[] = [];
 
     if (query.trim() !== "") {
       sql += " AND (title LIKE ? OR type LIKE ?)";
       params = [`%${query}%`, `%${query}%`];
+    }
+
+    if (filterType !== "all") {
+      sql += " AND type = ?";
+      params.push(filterType);
     }
 
     sql += " ORDER BY id DESC";
@@ -161,6 +168,31 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
+        <View style={styles.filterRow}>
+          {["all", "Thu", "Chi"].map((type) => (
+            <TouchableOpacity
+              key={type}
+              onPress={() => {
+                setFilter(type as any);
+                fetchTransactions(searchQuery, type as any);
+              }}
+              style={[
+                styles.filterButton,
+                filter === type && styles.filterButtonActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  filter === type && styles.filterTextActive,
+                ]}
+              >
+                {type === "all" ? "Tất cả" : type}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         {/* ✅ Danh sách giao dịch có kéo để làm mới */}
         <View style={styles.listContainer}>
           <Text style={styles.listTitle}>Danh sách giao dịch</Text>
@@ -259,4 +291,33 @@ const styles = StyleSheet.create({
   listContainer: { marginTop: 20 },
   listTitle: { fontSize: 16, fontWeight: "600", marginBottom: 8 },
   emptyText: { textAlign: "center", color: "#777", marginTop: 16 },
+  filterRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 16,
+    marginBottom: 4,
+  },
+
+  filterButton: {
+    flex: 1,
+    paddingVertical: 10,
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: "#2b8aef",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+
+  filterButtonActive: {
+    backgroundColor: "#2b8aef",
+  },
+
+  filterText: {
+    color: "#2b8aef",
+    fontWeight: "600",
+  },
+
+  filterTextActive: {
+    color: "#fff",
+  },
 });
