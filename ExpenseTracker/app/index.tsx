@@ -153,6 +153,11 @@ export default function HomeScreen() {
           <TouchableOpacity onPress={handleSync} style={styles.syncButton}>
             <Text style={styles.syncButtonText}>Đồng bộ</Text>
           </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push("/statistics")}>
+            <Text style={{ color: "#2b8aef", marginTop: 12 }}>
+              📊 Xem thống kê
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* 🔍 Thanh tìm kiếm */}
